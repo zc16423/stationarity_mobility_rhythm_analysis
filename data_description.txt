@@ -1,0 +1,58 @@
+Dataset Description: "Structural inequality shapes the daily rhythm of stationarity and mobility"
+
+1. Data Sources
+
+  US Census Bureau American Community Survey (ACS): 2015–2019 5-year estimates.
+  US EPA Smart Location Database (SLD v3): Used for built environment and infrastructure metrics.
+  Anonymized Mobility Data: SafeGraph Social Distancing Metrics (2019.01.01–2020.12.31).
+
+2. Geographic Identifiers
+
+  census_block_group: US census block group identifier (12-digit GEOID format).
+  county: County-level identifier.
+  state: State-level identifier.
+
+3. Demographic Variables
+
+  Pct_NH_White_alone_ACS_15_19: Percentage of non-Hispanic White population.
+  Definition: (non-Hispanic White population / total population) × 100.
+
+  Pct_Hispanic_ACS_15_19: Percentage of Hispanic or Latino population.
+  Definition: (Hispanic/Latino population / total population) × 100.
+
+  Pct_NH_Blk_alone_ACS_15_19: Percentage of non-Hispanic Black population.
+  Definition: (non-Hispanic Black population / total population) × 100.
+
+4. Socioeconomic & Education Variables
+
+  Poverty_Rate: Percentage of the population living below the federal poverty level.
+
+  Unemployment_rate: Labor force unemployment rate.
+  Definition: (unemployed persons / labor force) × 100.
+
+  Pct_Age_65Plus: Percentage of the population aged 65 years and older.
+
+  Pct_No_High_School: Population (25+ years) without a high school diploma.
+  Definition: (no diploma holders / population 25+) × 100.
+
+5. Housing & Built Environment Variables
+
+  Pct_Owner_Occupied: Owner-occupied housing percentage.
+  Definition: (owner-occupied units / total occupied units) × 100.
+
+  Pct_Vacant_Housing: Vacant housing unit percentage.
+  Definition: (vacant units / total housing units) × 100.
+
+  Employment_Housing_Entropy: Measure of land-use mix (balance between employment and housing).
+
+  Street_Connectivity: Measure of network density/accessibility (often represented by intersection density).
+
+6. STASIS Model Parameters (Derived Target Variables)
+
+  Range (2A): The full scale of variation between activity and stationarity within a daily cycle.
+
+  Phase Angle ($\phi$): The timing of the stationarity trough (i.e., peak mobility) within the 24-hour cycle.
+
+  Baseline (B): The central line around which the sinusoid oscillates, representing the average level of stationarity.
+
+  Rhythm Stability Index ($\text{RSI}_\phi$): Defined as the variance of the daily phase angle ($\text{Var}(\phi)$), quantifying the temporal instability/volatility of daily mobility rhythms.
