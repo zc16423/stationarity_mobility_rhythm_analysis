@@ -12,201 +12,186 @@ This stratification controls for potential sparsity effects.
 The persistence of racial disparities across quartiles
 demonstrates the robustness of the RSI_phi signal.
 
-Error bars represent 95% confidence intervals.
-
 Input:
     figure_data/Figure3/Fig3c/Fig3c.csv
 
 Required columns:
-    Device_Count_Group
-    Race
-    mean
-    CI_upper
+ group_Q
+   phase_angle_variance	
 
 Output:
-    visualization/Figure3/Fig3c//Fig3c.svg
+    visualization/Figure3/Fig3c/Fig3c.svg
 """
 
+from pathlib import Path
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-from pathlib import Path
 
+# ==============================
+# 0. Reproducibility
+# ==============================
+np.random.seed(42)
 
-# ---------------------------
-# Path configuration
-# ---------------------------
+# ==============================
+# 1. Paths (GitHub-friendly)
+# ==============================
+BASE_DIR = Path(__file__).resolve().parents[2]
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-DATA_DIR = BASE_DIR / "data"
-FIGURE_DIR = BASE_DIR / "figures"
+DATA_DIR = BASE_DIR / "figure_data" / "Figure3" / "Fig3c"
+OUT_DIR = BASE_DIR / "visualization" / "Figure3" / "Fig3c"
+OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-FIGURE_DIR.mkdir(exist_ok=True)
-
-
-# ---------------------------
-# Plot style
-# ---------------------------
-
-plt.rcParams["font.family"] = "Arial"
-plt.rcParams["font.weight"] = "normal"
-plt.rcParams["svg.fonttype"] = "none"
-
+# ==============================
+# 2. Plot style (NC compliant)
+# ==============================
+plt.rcParams.update({
+    'font.family': ['Arial', 'DejaVu Sans'],
+    'font.weight': 'normal',
+    'svg.fonttype': 'none'
+})
 sns.set_theme(style="white")
 
-
-# ---------------------------
-# Load data
-# ---------------------------
-
-df = pd.read_csv(DATA_DIR / "Fig3c.csv")
-
-
-# ---------------------------
-# Color scheme
-# ---------------------------
-
-colors = {
-    "White": "#33bfeb",
-    "Hispanic": "#ff7f0e",
-    "Black": "#d62728"
+# ==============================
+# 3. Load data with validation
+# ==============================
+files = {
+    'Black': DATA_DIR / "Black.csv",
+    'Hispanic': DATA_DIR / "Hispanic.csv",
+    'White': DATA_DIR / "White.csv"
 }
 
+required_cols = {'group_Q', 'phase_angle_variance'}
 
-# ---------------------------
-# Prepare groups
-# ---------------------------
+data_list = []
 
-groups = df["Device_Count_Group"].unique()
+for race, path in files.items():
+    if not path.exists():
+        raise FileNotFoundError(f"Missing file: {path}")
 
-x = np.arange(len(groups))
-width = 0.3
+    df = pd.read_csv(path)
 
+    if not required_cols.issubset(df.columns):
+        raise ValueError(f"{path} missing required columns {required_cols}")
 
-# ---------------------------
-# Create figure
-# ---------------------------
+    df = df.copy()
+    df['Race'] = race
+    data_list.append(df)
 
-fig, ax = plt.subplots(figsize=(8, 6))
+df_all = pd.concat(data_list, ignore_index=True)
 
+# ==============================
+# 4. Data processing
+# ==============================
+group_map = {
+    1: 'Low',
+    2: 'Medium-Low',
+    3: 'Medium-High',
+    4: 'High'
+}
 
-# ---------------------------
-# Bar plots with 95% CI
-# ---------------------------
+df_all['Device_Count_Group'] = df_all['group_Q'].map(group_map)
 
-for i, race in enumerate(["White", "Hispanic", "Black"]):
+if df_all['Device_Count_Group'].isna().any():
+    raise ValueError("Invalid values found in group_Q")
 
-    race_data = df[df["Race"] == race]
+df_all = df_all.rename(columns={'phase_angle_variance': 'RSI_phi'})
 
-    means = race_data["mean"].values
+group_order = ['Low', 'Medium-Low', 'Medium-High', 'High']
+race_order = ['White', 'Hispanic', 'Black']
 
-    errors = (race_data["CI_upper"] - race_data["mean"]).values
+colors = {
+    'White': '#33bfeb',
+    'Hispanic': '#ff7f0e',
+    'Black': '#d62728'
+}
 
-    offset = width * (i - 0.5)
+# ==============================
+# 5. Plot
+# ==============================
+fig, ax = plt.subplots(figsize=(11, 8))
 
-    ax.bar(
-        x + offset,
-        means,
-        width,
-        label=race,
-        color=colors[race],
-        yerr=errors,
-        capsize=5,
-        alpha=0.8,
-        error_kw={
-            "elinewidth": 1.5,
-            "markeredgewidth": 1.5
-        }
-    )
-
-
-# ---------------------------
-# Axis labels
-# ---------------------------
-
-ax.set_ylabel(r"$RSI_\phi$", fontsize=26)
-ax.set_xlabel("Device Count Quartile", fontsize=26)
-
-ax.set_xticks(x)
-ax.set_xticklabels(groups, fontsize=24)
-
-
-# Y-axis range
-ax.set_ylim(-0.05, 0.5)
-
-
-# Remove grid
-ax.grid(False)
-
-
-# ---------------------------
-# Spine styling
-# ---------------------------
-
-for spine_location, spine in ax.spines.items():
-
-    if spine_location in ["left", "bottom"]:
-        spine.set_visible(True)
-        spine.set_color("black")
-        spine.set_linewidth(1.5)
-
-    else:
-        spine.set_visible(False)
-
-
-# ---------------------------
-# Tick styling
-# ---------------------------
-
-ax.tick_params(
-    axis="both",
-    which="both",
-    direction="out",
-    length=7,
-    width=1.5,
-    color="black",
-    labelsize=24
+sns.boxplot(
+    data=df_all,
+    x='Device_Count_Group',
+    y='RSI_phi',
+    hue='Race',
+    order=group_order,
+    hue_order=race_order,
+    palette=colors,
+    showfliers=False,
+    linewidth=1.5,
+    width=0.7,
+    showmeans=True,
+    meanprops={
+        "marker": "d",
+        "markerfacecolor": "white",
+        "markeredgecolor": "black",
+        "markersize": 8
+    },
+    ax=ax
 )
 
-ax.yaxis.set_ticks_position("left")
-ax.xaxis.set_ticks_position("bottom")
+# ==============================
+# 6. Styling
+# ==============================
+ax.set_ylabel(r'$\mathrm{RSI}_{\phi}$', fontsize=28)
+ax.set_xlabel('Device Count', fontsize=28)
 
+ax.set_xticks(range(len(group_order)))
+ax.set_xticklabels(group_order, fontsize=22)
 
-# ---------------------------
-# Legend
-# ---------------------------
+ax.set_ylim(0, 0.7)
 
+# spine
+for spine in ['left', 'bottom']:
+    ax.spines[spine].set_linewidth(2)
+    ax.spines[spine].set_color('black')
+
+sns.despine(ax=ax, top=True, right=True)
+
+# ticks
+ax.tick_params(
+    axis='both',
+    which='major',
+    direction='out',
+    length=8,
+    width=2,
+    labelsize=22
+)
+
+# legend
 ax.legend(
     title=None,
-    loc="upper right",
-    fontsize=24,
+    loc='upper right',
+    fontsize=20,
     frameon=False
 )
 
-
-# ---------------------------
-# Layout
-# ---------------------------
-
 plt.tight_layout()
 
-plt.subplots_adjust(
-    left=0.14,
-    right=0.97,
-    top=0.98,
-    bottom=0.14
+# ==============================
+# 7. Save (with metadata)
+# ==============================
+output_path = OUT_DIR / "Fig3c.svg"
+
+plt.savefig(
+    output_path,
+    format='svg',
+    bbox_inches='tight',
+    metadata={
+        "Creator": "Matplotlib",
+        "Description": "Figure 3c: RSI_phi stratified by device density quartiles"
+    }
 )
 
+plt.close()
 
-# ---------------------------
-# Save figure
-# ---------------------------
+print(f"Figure saved to: {output_path}")
 
-output_path = FIGURE_DIR / "Fig3c.svg"
-
-plt.savefig(output_path, format="svg")
-
-plt.show()
-
-print(f"Figure saved to {output_path}")
+# ==============================
+# 8. Entry point
+# ==============================
+if __name__ == "__main__":
+    pass
