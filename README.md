@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19438054.svg)](https://doi.org/10.5281/zenodo.19438054)
 # “Structural inequality shapes the daily rhythm of stationarity and mobility” Analysis and Visualization
 
 ## Overview
